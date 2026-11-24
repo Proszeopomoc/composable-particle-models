@@ -1,0 +1,34 @@
+name: eksperyment
+
+on:
+  workflow_dispatch:
+    inputs:
+      warianty:
+        description: 'Warianty do uruchomienia (JSON), np. ["A","C","D","E"]'
+        default: '["A","C","D","E"]'
+  push:
+    paths: ["eksperyment.py", ".github/workflows/eksperyment.yml"]
+
+jobs:
+  trening:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    strategy:
+      fail-fast: false
+      matrix:
+        wariant: ${{ fromJSON(github.event.inputs.warianty || '["A","C","D","E"]') }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Instalacja
+        run: |
+          pip install numpy
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+      - name: Trening i test wariantu ${{ matrix.wariant }}
+        run: python eksperyment.py ${{ matrix.wariant }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wynik_${{ matrix.wariant }}
+          path: wynik_${{ matrix.wariant }}.json
